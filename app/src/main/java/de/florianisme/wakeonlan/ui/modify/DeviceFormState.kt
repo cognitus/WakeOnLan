@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.florianisme.wakeonlan.R
 import de.florianisme.wakeonlan.persistence.models.Device
+import de.florianisme.wakeonlan.wol.WakeCommandTemplate
 
 /**
  * Holds the mutable state of the add/edit device form and derives validation errors,
@@ -23,10 +24,17 @@ class DeviceFormState(initial: Device? = null) {
 
     var remoteShutdownEnabled by mutableStateOf(initial?.remoteShutdownEnabled ?: false)
     var sshAddress by mutableStateOf(initial?.sshAddress.orEmpty())
-    var sshPort by mutableStateOf(sshPortFallback(initial))
+    var sshPort by mutableStateOf(portFallback(initial?.sshPort))
     var sshUsername by mutableStateOf(initial?.sshUsername.orEmpty())
     var sshPassword by mutableStateOf(initial?.sshPassword.orEmpty())
     var sshCommand by mutableStateOf(initial?.sshCommand.orEmpty())
+
+    var wakeViaSsh by mutableStateOf(initial?.wakeViaSsh ?: false)
+    var relayAddress by mutableStateOf(initial?.relaySshAddress.orEmpty())
+    var relayPort by mutableStateOf(portFallback(initial?.relaySshPort))
+    var relayUsername by mutableStateOf(initial?.relaySshUsername.orEmpty())
+    var relayPassword by mutableStateOf(initial?.relaySshPassword.orEmpty())
+    var relayCommand by mutableStateOf(relayCommandFallback(initial))
 
     /** Set to true after the first save attempt so errors are shown for untouched fields too. */
     var showErrors by mutableStateOf(false)
@@ -61,13 +69,37 @@ class DeviceFormState(initial: Device? = null) {
             R.string.add_device_error_ssh_command_empty
         )
 
+    val relayAddressError: Int?
+        get() = DeviceFormValidation.validateConditionalNotEmpty(
+            relayAddress,
+            wakeViaSsh,
+            R.string.add_device_error_ssh_address_empty
+        )
+    val relayPortError: Int?
+        get() = if (wakeViaSsh) DeviceFormValidation.validatePort(relayPort.trim()) else null
+    val relayUsernameError: Int?
+        get() = DeviceFormValidation.validateConditionalNotEmpty(
+            relayUsername,
+            wakeViaSsh,
+            R.string.add_device_error_ssh_username_empty
+        )
+    val relayCommandError: Int?
+        get() = DeviceFormValidation.validateConditionalNotEmpty(
+            relayCommand,
+            wakeViaSsh,
+            R.string.add_device_error_ssh_command_empty
+        )
+
     val isValid: Boolean
         get() = nameError == null && macError == null && portError == null && secureOnError == null &&
-                sshAddressError == null && sshUsernameError == null && sshCommandError == null
+                sshAddressError == null && sshUsernameError == null && sshCommandError == null &&
+                relayAddressError == null && relayPortError == null && relayUsernameError == null && relayCommandError == null
 
     fun getPort(): Int = port.trim().toIntOrNull() ?: 9
 
     private fun getSshPort(): Int = sshPort.trim().toIntOrNull() ?: -1
+
+    private fun getRelayPort(): Int = relayPort.trim().toIntOrNull() ?: -1
 
     fun toDevice(): Device {
         val device = existing ?: Device()
@@ -83,6 +115,12 @@ class DeviceFormState(initial: Device? = null) {
         device.sshUsername = sshUsername.trim()
         device.sshPassword = sshPassword.trim()
         device.sshCommand = sshCommand.trim()
+        device.wakeViaSsh = wakeViaSsh
+        device.relaySshAddress = relayAddress.trim()
+        device.relaySshPort = getRelayPort()
+        device.relaySshUsername = relayUsername.trim()
+        device.relaySshPassword = relayPassword.trim()
+        device.relaySshCommand = relayCommand.trim()
         return device
     }
 
@@ -99,7 +137,13 @@ class DeviceFormState(initial: Device? = null) {
                 (device.sshPort ?: -1) == getSshPort() &&
                 device.sshUsername.orEmpty() == sshUsername.trim() &&
                 device.sshPassword.orEmpty() == sshPassword.trim() &&
-                device.sshCommand.orEmpty() == sshCommand.trim()
+                device.sshCommand.orEmpty() == sshCommand.trim() &&
+                device.wakeViaSsh == wakeViaSsh &&
+                device.relaySshAddress.orEmpty() == relayAddress.trim() &&
+                (device.relaySshPort ?: -1) == getRelayPort() &&
+                device.relaySshUsername.orEmpty() == relayUsername.trim() &&
+                device.relaySshPassword.orEmpty() == relayPassword.trim() &&
+                relayCommandFallback(device) == relayCommand.trim()
     }
 
     private fun isEmptyForm(): Boolean =
@@ -107,13 +151,20 @@ class DeviceFormState(initial: Device? = null) {
                 broadcast.trim().isEmpty() && statusIp.trim().isEmpty() &&
                 secureOn.trim().isEmpty() && !remoteShutdownEnabled &&
                 sshAddress.trim().isEmpty() && getSshPort() == -1 && sshUsername.trim().isEmpty() &&
-                sshPassword.trim().isEmpty() && sshCommand.trim().isEmpty()
+                sshPassword.trim().isEmpty() && sshCommand.trim().isEmpty() &&
+                !wakeViaSsh && relayAddress.trim().isEmpty() && getRelayPort() == -1 &&
+                relayUsername.trim().isEmpty() && relayPassword.trim().isEmpty() &&
+                relayCommand.trim() == WakeCommandTemplate.DEFAULT_TEMPLATE
 
     companion object {
-        private fun sshPortFallback(initial: Device?): String {
-            val port = initial?.sshPort ?: return ""
+        private fun portFallback(port: Int?): String {
+            if (port == null) return ""
             return if (port < 0) "" else port.toString()
         }
+
+        /** Pre-fills the command template so the user only has to adjust it to their relay. */
+        private fun relayCommandFallback(device: Device?): String =
+            device?.relaySshCommand.orEmpty().ifEmpty { WakeCommandTemplate.DEFAULT_TEMPLATE }
     }
 }
 

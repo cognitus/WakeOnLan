@@ -51,6 +51,24 @@ public class DeviceBackupModel {
     @SerializedName(value = "ssh_command")
     public String sshCommand;
 
+    @SerializedName(value = "wake_via_ssh")
+    public boolean wakeViaSsh;
+
+    @SerializedName(value = "relay_ssh_address")
+    public String relaySshAddress;
+
+    @SerializedName(value = "relay_ssh_port")
+    public Integer relaySshPort;
+
+    @SerializedName(value = "relay_ssh_username")
+    public String relaySshUsername;
+
+    @SerializedName(value = "relay_ssh_password")
+    public String relaySshPassword;
+
+    @SerializedName(value = "relay_ssh_command")
+    public String relaySshCommand;
+
     public DeviceBackupModel(Device device) {
         this.id = device.id;
         this.name = device.name;
@@ -65,11 +83,18 @@ public class DeviceBackupModel {
         this.sshUsername = device.sshUsername;
         this.sshPassword = device.sshPassword;
         this.sshCommand = device.sshCommand;
+        this.wakeViaSsh = device.wakeViaSsh;
+        this.relaySshAddress = device.relaySshAddress;
+        this.relaySshPort = device.relaySshPort;
+        this.relaySshUsername = device.relaySshUsername;
+        this.relaySshPassword = device.relaySshPassword;
+        this.relaySshCommand = device.relaySshCommand;
     }
 
     public Device toModel() {
         return new Device(this.id, this.name, this.macAddress, this.broadcastAddress, this.port, this.statusIp, this.secureOnPassword,
-                this.remoteShutdownEnabled, this.sshAddress, this.sshPort, this.sshUsername, this.sshPassword, this.sshCommand);
+                this.remoteShutdownEnabled, this.sshAddress, this.sshPort, this.sshUsername, this.sshPassword, this.sshCommand,
+                this.wakeViaSsh, this.relaySshAddress, this.relaySshPort, this.relaySshUsername, this.relaySshPassword, this.relaySshCommand);
     }
 
     @SuppressWarnings("unused")

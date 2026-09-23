@@ -1,7 +1,14 @@
 package de.florianisme.wakeonlan.ui.modify
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,9 +54,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import de.florianisme.wakeonlan.R
 import de.florianisme.wakeonlan.persistence.models.Device
+import de.florianisme.wakeonlan.shutdown.ShutdownExecutor
 import de.florianisme.wakeonlan.ui.theme.WakeOnLanTheme
+import de.florianisme.wakeonlan.wol.WakeDispatcher
 
 /** Runs the broadcast interface lookup and fills the broadcast field, mirroring the old autofill button. */
 fun fillBroadcastAddress(state: DeviceFormState) {
@@ -70,7 +80,8 @@ fun ModifyDeviceScreen(
 ) {
     val context = LocalContext.current
 
-    var showTestDialog by remember { mutableStateOf(false) }
+    var showShutdownTestDialog by remember { mutableStateOf(false) }
+    var showWakeTestDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
 
@@ -90,6 +101,14 @@ fun ModifyDeviceScreen(
     }
 
     BackHandler { attemptClose() }
+
+    // SSH failures outside the test dialog are reported as notifications; if denied they fall back to a toast
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsAllowed(context)) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -171,6 +190,75 @@ fun ModifyDeviceScreen(
                 }
             }
 
+            SectionTitle(R.string.add_device_wake_ssh)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(
+                    checked = state.wakeViaSsh,
+                    onCheckedChange = {
+                        state.wakeViaSsh = it
+                        if (it) requestNotificationPermissionIfNeeded()
+                    },
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.add_device_wake_ssh_enable))
+            }
+            Text(
+                text = stringResource(R.string.add_device_wake_ssh_explanation),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            if (state.wakeViaSsh) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LabeledField(
+                        value = state.relayAddress,
+                        onValueChange = { state.relayAddress = it },
+                        labelRes = R.string.add_device_wake_ssh_ip,
+                        errorRes = if (state.showErrors) state.relayAddressError else null,
+                        placeholder = "192.168.0.2",
+                        modifier = Modifier.weight(1f),
+                    )
+                    LabeledField(
+                        value = state.relayPort,
+                        onValueChange = { state.relayPort = it },
+                        labelRes = R.string.add_device_shutdown_port,
+                        errorRes = if (state.showErrors) state.relayPortError else null,
+                        placeholder = "22",
+                        keyboardType = KeyboardType.Number,
+                        modifier = Modifier.width(120.dp),
+                    )
+                }
+                LabeledField(
+                    value = state.relayUsername,
+                    onValueChange = { state.relayUsername = it },
+                    labelRes = R.string.add_device_shutdown_username,
+                    errorRes = if (state.showErrors) state.relayUsernameError else null,
+                )
+                LabeledField(
+                    value = state.relayPassword,
+                    onValueChange = { state.relayPassword = it },
+                    labelRes = R.string.add_device_shutdown_password,
+                    isPassword = true,
+                )
+                LabeledField(
+                    value = state.relayCommand,
+                    onValueChange = { state.relayCommand = it },
+                    labelRes = R.string.add_device_wake_ssh_command,
+                    errorRes = if (state.showErrors) state.relayCommandError else null,
+                    supportingRes = R.string.add_device_wake_ssh_command_helper,
+                )
+                OutlinedButton(
+                    onClick = {
+                        state.showErrors = true
+                        if (state.isValid) showWakeTestDialog = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                ) {
+                    Text(stringResource(R.string.modify_device_test_wake))
+                }
+            }
+
             SectionTitle(R.string.device_title_status)
             LabeledField(
                 value = state.statusIp,
@@ -184,7 +272,10 @@ fun ModifyDeviceScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(
                     checked = state.remoteShutdownEnabled,
-                    onCheckedChange = { state.remoteShutdownEnabled = it },
+                    onCheckedChange = {
+                        state.remoteShutdownEnabled = it
+                        if (it) requestNotificationPermissionIfNeeded()
+                    },
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.add_device_shutdown_enable))
@@ -235,7 +326,7 @@ fun ModifyDeviceScreen(
                 OutlinedButton(
                     onClick = {
                         state.showErrors = true
-                        if (state.isValid) showTestDialog = true
+                        if (state.isValid) showShutdownTestDialog = true
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -256,8 +347,24 @@ fun ModifyDeviceScreen(
         }
     }
 
-    if (showTestDialog) {
-        ShutdownTestDialog(device = state.toDevice(), onDismiss = { showTestDialog = false })
+    if (showShutdownTestDialog) {
+        val device = state.toDevice()
+        SshCommandTestDialog(
+            titleRes = R.string.remote_shutdown_send_command_dialog_title,
+            executingCommandRes = R.string.test_shutdown_initial_command_execute,
+            runCommand = { dialogContext, listener -> ShutdownExecutor.shutdownDevice(dialogContext, device, listener) },
+            onDismiss = { showShutdownTestDialog = false },
+        )
+    }
+
+    if (showWakeTestDialog) {
+        val device = state.toDevice()
+        SshCommandTestDialog(
+            titleRes = R.string.wake_ssh_test_dialog_title,
+            executingCommandRes = R.string.test_wake_ssh_initial_command_execute,
+            runCommand = { dialogContext, listener -> WakeDispatcher.wakeViaSsh(dialogContext, device, listener) },
+            onDismiss = { showWakeTestDialog = false },
+        )
     }
 
     if (showDeleteDialog) {
@@ -300,6 +407,10 @@ fun ModifyDeviceScreen(
         )
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private fun notificationsAllowed(context: Context): Boolean =
+    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
 @Composable
 private fun MacField(state: DeviceFormState, modifier: Modifier = Modifier) {

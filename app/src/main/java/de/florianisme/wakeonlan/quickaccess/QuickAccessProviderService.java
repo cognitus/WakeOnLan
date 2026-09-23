@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 import de.florianisme.wakeonlan.persistence.models.Device;
 import de.florianisme.wakeonlan.persistence.repository.DeviceRepository;
-import de.florianisme.wakeonlan.wol.WolSender;
+import de.florianisme.wakeonlan.wol.WakeDispatcher;
 import io.reactivex.Flowable;
 import io.reactivex.processors.ReplayProcessor;
 
@@ -64,7 +64,7 @@ public class QuickAccessProviderService extends ControlsProviderService {
         Device device = deviceRepository.getById(Integer.parseInt(controlId));
 
         if (device != null) {
-            WolSender.sendWolPacket(device);
+            WakeDispatcher.wake(this, device);
             StatefulControlService.createAndUpdateStatefulControl(controlId, processor, this);
         }
     }

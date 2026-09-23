@@ -7,12 +7,13 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 
 import de.florianisme.wakeonlan.persistence.models.Device;
+import de.florianisme.wakeonlan.ssh.SshCommandModel;
 
 public class ShutdownModelFactory {
 
     private static final int DEFAULT_SSH_PORT = 22;
 
-    public static Optional<ShutdownModel> fromDevice(Device device) {
+    public static Optional<SshCommandModel> fromDevice(Device device) {
         boolean shutdownEnabled = device.remoteShutdownEnabled;
         String address = getValueOrFallback(device.sshAddress, device.statusIp);
         int port = getSshPortOrFallback(device.sshPort);
@@ -21,7 +22,7 @@ public class ShutdownModelFactory {
         String command = getValueOrFallback(device.sshCommand, null);
 
         if (allRequiredFieldsSet(shutdownEnabled, address, username, command)) {
-            return Optional.of(new ShutdownModel(address, port, username, password, command));
+            return Optional.of(new SshCommandModel(address, port, username, password, command));
         }
 
         return Optional.empty();

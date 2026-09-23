@@ -3,44 +3,34 @@ package de.florianisme.wakeonlan.shutdown;
 import android.content.Context;
 import android.util.Log;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import java.security.Security;
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
+import de.florianisme.wakeonlan.R;
 import de.florianisme.wakeonlan.persistence.models.Device;
-import de.florianisme.wakeonlan.shutdown.hostkey.HostKeyStore;
-import de.florianisme.wakeonlan.shutdown.listener.IgnoringShutdownExecutorListener;
-import de.florianisme.wakeonlan.shutdown.listener.ShutdownExecutorListener;
+import de.florianisme.wakeonlan.ssh.SshCommandExecutor;
+import de.florianisme.wakeonlan.ssh.SshCommandListener;
+import de.florianisme.wakeonlan.ssh.SshCommandModel;
+import de.florianisme.wakeonlan.ssh.SshFailureNotifier;
 
 public class ShutdownExecutor {
 
-    private static final Executor executor = Executors.newSingleThreadExecutor();
-
-    static {
-        // Override Android's BC implementation with official BC Provider
-        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
-        Security.insertProviderAt(new BouncyCastleProvider(), 1);
-    }
-
-    public static void shutdownDevice(Context context, Device device, ShutdownExecutorListener shutdownExecutorListener) {
-        Optional<ShutdownModel> optionalShutdownModel = ShutdownModelFactory.fromDevice(device);
+    public static void shutdownDevice(Context context, Device device, SshCommandListener listener) {
+        Optional<SshCommandModel> optionalShutdownModel = ShutdownModelFactory.fromDevice(device);
 
         if (optionalShutdownModel.isEmpty()) {
             Log.w(ShutdownExecutor.class.getSimpleName(), "Can not shutdown device. Not all required fields were set");
-            shutdownExecutorListener.onGeneralError(new IllegalArgumentException("Can not shutdown device. Not all required fields were set"), null);
+            listener.onGeneralError(new IllegalArgumentException("Can not shutdown device. Not all required fields were set"), null);
             return;
         }
 
-        ShutdownModel shutdownModel = optionalShutdownModel.get();
-        ShutdownRunnable shutdownRunnable = new ShutdownRunnable(shutdownModel, new HostKeyStore(context), shutdownExecutorListener);
-
-        executor.execute(shutdownRunnable);
+        // The target usually drops the connection while shutting down
+        SshCommandExecutor.execute(context, optionalShutdownModel.get(), true, listener);
     }
 
+    /**
+     * Shuts the device down without a UI waiting for the result. Failures are reported as a notification.
+     */
     public static void shutdownDevice(Context context, Device device) {
-        shutdownDevice(context, device, new IgnoringShutdownExecutorListener());
+        shutdownDevice(context, device, new SshFailureNotifier(context, device, R.string.ssh_failure_notification_title_shutdown));
     }
 }

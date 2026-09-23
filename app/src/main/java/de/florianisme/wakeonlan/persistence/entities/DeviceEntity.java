@@ -47,9 +47,29 @@ public class DeviceEntity {
     @ColumnInfo(name = "ssh_command")
     public String sshCommand;
 
+    @ColumnInfo(name = "wake_via_ssh", defaultValue = "0")
+    public boolean wakeViaSsh;
+
+    @ColumnInfo(name = "relay_ssh_address")
+    public String relaySshAddress;
+
+    @ColumnInfo(name = "relay_ssh_port")
+    public Integer relaySshPort;
+
+    @ColumnInfo(name = "relay_ssh_user")
+    public String relaySshUsername;
+
+    @ColumnInfo(name = "relay_ssh_password")
+    public String relaySshPassword;
+
+    @ColumnInfo(name = "relay_ssh_command")
+    public String relaySshCommand;
+
     @Ignore
     public DeviceEntity(int id, String name, String macAddress, String broadcastAddress, int port, String statusIp, String secureOnPassword,
-                        boolean enableRemoteShutdown, String sshAddress, Integer sshPort, String sshUsername, String sshPassword, String sshCommand) {
+                        boolean enableRemoteShutdown, String sshAddress, Integer sshPort, String sshUsername, String sshPassword, String sshCommand,
+                        boolean wakeViaSsh, String relaySshAddress, Integer relaySshPort, String relaySshUsername, String relaySshPassword,
+                        String relaySshCommand) {
         this.id = id;
         this.name = name;
         this.macAddress = macAddress;
@@ -63,6 +83,12 @@ public class DeviceEntity {
         this.sshUsername = sshUsername;
         this.sshPassword = sshPassword;
         this.sshCommand = sshCommand;
+        this.wakeViaSsh = wakeViaSsh;
+        this.relaySshAddress = relaySshAddress;
+        this.relaySshPort = relaySshPort;
+        this.relaySshUsername = relaySshUsername;
+        this.relaySshPassword = relaySshPassword;
+        this.relaySshCommand = relaySshCommand;
     }
 
 

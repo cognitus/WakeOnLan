@@ -33,8 +33,22 @@ public class Device implements Parcelable {
 
     public String sshCommand;
 
+    public boolean wakeViaSsh;
+
+    public String relaySshAddress;
+
+    public Integer relaySshPort;
+
+    public String relaySshUsername;
+
+    public String relaySshPassword;
+
+    public String relaySshCommand;
+
     public Device(int id, String name, String macAddress, String broadcastAddress, int port, String statusIp, String secureOnPassword,
-                  boolean remoteShutdownEnabled, String sshAddress, Integer sshPort, String sshUsername, String sshPassword, String sshCommand) {
+                  boolean remoteShutdownEnabled, String sshAddress, Integer sshPort, String sshUsername, String sshPassword, String sshCommand,
+                  boolean wakeViaSsh, String relaySshAddress, Integer relaySshPort, String relaySshUsername, String relaySshPassword,
+                  String relaySshCommand) {
         this.id = id;
         this.name = name;
         this.macAddress = macAddress;
@@ -48,6 +62,12 @@ public class Device implements Parcelable {
         this.sshUsername = sshUsername;
         this.sshPassword = sshPassword;
         this.sshCommand = sshCommand;
+        this.wakeViaSsh = wakeViaSsh;
+        this.relaySshAddress = relaySshAddress;
+        this.relaySshPort = relaySshPort;
+        this.relaySshUsername = relaySshUsername;
+        this.relaySshPassword = relaySshPassword;
+        this.relaySshCommand = relaySshCommand;
     }
 
 
@@ -79,6 +99,12 @@ public class Device implements Parcelable {
         this.sshUsername = in.readString();
         this.sshPassword = in.readString();
         this.sshCommand = in.readString();
+        this.wakeViaSsh = in.readInt() >= 1;
+        this.relaySshAddress = in.readString();
+        this.relaySshPort = in.readInt();
+        this.relaySshUsername = in.readString();
+        this.relaySshPassword = in.readString();
+        this.relaySshCommand = in.readString();
     }
 
     @Override
@@ -101,5 +127,11 @@ public class Device implements Parcelable {
         dest.writeString(sshUsername);
         dest.writeString(sshPassword);
         dest.writeString(sshCommand);
+        dest.writeInt(wakeViaSsh ? 1 : 0);
+        dest.writeString(relaySshAddress);
+        dest.writeInt(relaySshPort == null ? -1 : relaySshPort);
+        dest.writeString(relaySshUsername);
+        dest.writeString(relaySshPassword);
+        dest.writeString(relaySshCommand);
     }
 }
