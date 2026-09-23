@@ -34,6 +34,30 @@ public class TrustOnFirstUseHostKeyVerifierTest {
     }
 
     @Test
+    public void testFingerprint_ed25519KeyOfUnknownImplementation() throws Exception {
+        // Conscrypt's Ed25519 keys on Android 16 have an algorithm name sshj does not recognize
+        PublicKey key = publicKey(KEY_ONE);
+        PublicKey foreignKey = new PublicKey() {
+            @Override
+            public String getAlgorithm() {
+                return "OpenSslEdDsa";
+            }
+
+            @Override
+            public String getFormat() {
+                return key.getFormat();
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return key.getEncoded();
+            }
+        };
+
+        assertEquals(KEY_ONE_FINGERPRINT, TrustOnFirstUseHostKeyVerifier.fingerprint(foreignKey));
+    }
+
+    @Test
     public void testVerify_unknownHostIsTrusted() throws Exception {
         HostKeyStore store = mock(HostKeyStore.class);
         TrustOnFirstUseHostKeyVerifier verifier = new TrustOnFirstUseHostKeyVerifier(store);
