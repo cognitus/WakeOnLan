@@ -12,21 +12,23 @@ import java.util.stream.Collectors;
 
 import de.florianisme.wakeonlan.persistence.DatabaseInstanceManager;
 import de.florianisme.wakeonlan.persistence.DeviceDao;
+import de.florianisme.wakeonlan.persistence.crypto.SecretCipher;
 import de.florianisme.wakeonlan.persistence.entities.DeviceEntity;
 import de.florianisme.wakeonlan.persistence.mapper.DeviceEntityMapper;
 import de.florianisme.wakeonlan.persistence.models.Device;
 
 public class DeviceRepository {
 
-    private final DeviceEntityMapper deviceEntityMapper = new DeviceEntityMapper();
+    private final DeviceEntityMapper deviceEntityMapper;
     private final DeviceDao deviceDao;
 
-    DeviceRepository(DeviceDao deviceDao) {
+    DeviceRepository(DeviceDao deviceDao, SecretCipher secretCipher) {
         this.deviceDao = deviceDao;
+        this.deviceEntityMapper = new DeviceEntityMapper(secretCipher);
     }
 
     public static DeviceRepository getInstance(Context context) {
-        return new DeviceRepository(DatabaseInstanceManager.getInstance(context).deviceDao());
+        return new DeviceRepository(DatabaseInstanceManager.getInstance(context).deviceDao(), DatabaseInstanceManager.SECRET_CIPHER);
     }
 
 
