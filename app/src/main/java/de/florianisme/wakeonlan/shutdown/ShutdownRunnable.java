@@ -9,16 +9,15 @@ import net.schmizz.sshj.common.LoggerFactory;
 import net.schmizz.sshj.common.StreamCopier;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.TransportException;
-import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import de.florianisme.wakeonlan.shutdown.exception.CommandExecuteException;
+import de.florianisme.wakeonlan.shutdown.hostkey.HostKeyStore;
+import de.florianisme.wakeonlan.shutdown.hostkey.RejectedHostKey;
+import de.florianisme.wakeonlan.shutdown.hostkey.TrustOnFirstUseHostKeyVerifier;
 import de.florianisme.wakeonlan.shutdown.listener.ShutdownExecutorListener;
 
 public class ShutdownRunnable implements Runnable {
@@ -27,29 +26,23 @@ public class ShutdownRunnable implements Runnable {
     private static final int EXECUTE_TIMEOUT = 5000;
 
     private final ShutdownModel shutdownModel;
+    private final HostKeyStore hostKeyStore;
     private final ShutdownExecutorListener shutdownExecutorListener;
 
-    public ShutdownRunnable(ShutdownModel shutdownModel, ShutdownExecutorListener shutdownExecutorListener) {
+    public ShutdownRunnable(ShutdownModel shutdownModel, HostKeyStore hostKeyStore, ShutdownExecutorListener shutdownExecutorListener) {
         this.shutdownModel = shutdownModel;
+        this.hostKeyStore = hostKeyStore;
         this.shutdownExecutorListener = shutdownExecutorListener;
     }
 
     @Override
     public void run() {
         ByteArrayOutputStream commandOutputStream = new ByteArrayOutputStream();
+        TrustOnFirstUseHostKeyVerifier hostKeyVerifier = new TrustOnFirstUseHostKeyVerifier(hostKeyStore);
+        boolean commandSent = false;
 
         try (SSHClient sshClient = new SSHClient()) {
-            sshClient.addHostKeyVerifier(new HostKeyVerifier() {
-                @Override
-                public boolean verify(String hostname, int port, PublicKey key) {
-                    return true;
-                }
-
-                @Override
-                public List<String> findExistingAlgorithms(String hostname, int port) {
-                    return Collections.emptyList();
-                }
-            });
+            sshClient.addHostKeyVerifier(hostKeyVerifier);
             sshClient.setConnectTimeout(CONNECT_TIMEOUT);
             sshClient.connect(shutdownModel.getSshAddress(), shutdownModel.getSshPort());
             shutdownExecutorListener.onTargetHostReached();
@@ -62,20 +55,32 @@ public class ShutdownRunnable implements Runnable {
 
             session.allocateDefaultPTY();
             Session.Command exec = session.exec(shutdownModel.getCommand());
+            commandSent = true;
             new StreamCopier(exec.getInputStream(), commandOutputStream, LoggerFactory.DEFAULT)
                     .bufSize(exec.getLocalMaxPacketSize())
                     .spawn("stdout");
 
             exec.join(EXECUTE_TIMEOUT, TimeUnit.MILLISECONDS);
             Integer exitStatus = exec.getExitStatus();
+            if (exitStatus == null) {
+                throw new IllegalStateException("Command finished without reporting an exit status");
+            }
             if (exitStatus != 0) {
                 throw new CommandExecuteException("Command exited with status code " + exitStatus, exitStatus);
             }
 
             shutdownExecutorListener.onCommandExecuteSuccessful();
         } catch (Exception e) {
-            if (Throwables.getRootCause(e) instanceof TransportException) {
+            // The target usually drops the connection while shutting down
+            if (commandSent && Throwables.getRootCause(e) instanceof TransportException) {
                 shutdownExecutorListener.onCommandExecuteSuccessful();
+                return;
+            }
+
+            RejectedHostKey rejectedHostKey = hostKeyVerifier.getRejectedHostKey();
+            if (rejectedHostKey != null) {
+                Log.w(ShutdownRunnable.class.getSimpleName(), "Host key of " + rejectedHostKey.getHost() + " changed to " + rejectedHostKey.getFingerprint());
+                shutdownExecutorListener.onHostKeyChanged(rejectedHostKey);
                 return;
             }
 

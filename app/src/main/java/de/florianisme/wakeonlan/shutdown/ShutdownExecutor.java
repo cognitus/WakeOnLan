@@ -1,5 +1,6 @@
 package de.florianisme.wakeonlan.shutdown;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -10,6 +11,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import de.florianisme.wakeonlan.persistence.models.Device;
+import de.florianisme.wakeonlan.shutdown.hostkey.HostKeyStore;
 import de.florianisme.wakeonlan.shutdown.listener.IgnoringShutdownExecutorListener;
 import de.florianisme.wakeonlan.shutdown.listener.ShutdownExecutorListener;
 
@@ -23,7 +25,7 @@ public class ShutdownExecutor {
         Security.insertProviderAt(new BouncyCastleProvider(), 1);
     }
 
-    public static void shutdownDevice(Device device, ShutdownExecutorListener shutdownExecutorListener) {
+    public static void shutdownDevice(Context context, Device device, ShutdownExecutorListener shutdownExecutorListener) {
         Optional<ShutdownModel> optionalShutdownModel = ShutdownModelFactory.fromDevice(device);
 
         if (optionalShutdownModel.isEmpty()) {
@@ -33,12 +35,12 @@ public class ShutdownExecutor {
         }
 
         ShutdownModel shutdownModel = optionalShutdownModel.get();
-        ShutdownRunnable shutdownRunnable = new ShutdownRunnable(shutdownModel, shutdownExecutorListener);
+        ShutdownRunnable shutdownRunnable = new ShutdownRunnable(shutdownModel, new HostKeyStore(context), shutdownExecutorListener);
 
         executor.execute(shutdownRunnable);
     }
 
-    public static void shutdownDevice(Device device) {
-        shutdownDevice(device, new IgnoringShutdownExecutorListener());
+    public static void shutdownDevice(Context context, Device device) {
+        shutdownDevice(context, device, new IgnoringShutdownExecutorListener());
     }
 }

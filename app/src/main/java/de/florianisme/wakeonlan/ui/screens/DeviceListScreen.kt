@@ -140,7 +140,7 @@ fun DeviceListScreen() {
                             context.startActivity(intent)
                         },
                         onShutdownClicked = {
-                            ShutdownExecutor.shutdownDevice(device)
+                            ShutdownExecutor.shutdownDevice(context, device)
                             Toast.makeText(
                                 context,
                                 context.getString(

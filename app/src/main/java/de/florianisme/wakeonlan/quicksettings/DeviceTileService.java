@@ -78,7 +78,7 @@ public abstract class DeviceTileService extends TileService implements DeviceSta
     public void onClick() {
         if (lastDeviceStatus == DeviceStatus.ONLINE) {
             if (device.remoteShutdownEnabled) {
-                ShutdownExecutor.shutdownDevice(device);
+                ShutdownExecutor.shutdownDevice(this, device);
                 Toast.makeText(this, getString(R.string.remote_shutdown_send_command, device.name), Toast.LENGTH_LONG).show();
             }
         } else {
