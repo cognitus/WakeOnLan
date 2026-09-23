@@ -30,11 +30,9 @@ public class WolSender {
                     return;
                 }
 
-                try {
+                try (DatagramSocket socket = new DatagramSocket()) {
                     DatagramPacket packet = PacketBuilder.buildMagicPacket(broadcastAddress, device.macAddress, device.port, device.secureOnPassword);
-                    DatagramSocket socket = new DatagramSocket();
                     socket.send(packet);
-                    socket.close();
                 } catch (Exception e) {
                     Log.e(this.getClass().getName(), "Error while sending magic packet: ", e);
                 }

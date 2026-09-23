@@ -89,11 +89,13 @@ class PacketBuilder {
         try {
             for (int i = 0; i < 4; i++) {
                 int ipOctetNumber = Integer.parseInt(ipOctets[i]);
-                String hexString = Integer.toHexString(ipOctetNumber);
-                bytes[i] = (byte) Integer.parseInt(hexString, 16);
+                if (ipOctetNumber > 255) {
+                    throw new IllegalArgumentException("Invalid octet in IP address.");
+                }
+                bytes[i] = (byte) ipOctetNumber;
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid hex digit in IP address.");
+            throw new IllegalArgumentException("Invalid digit in IP address.");
         }
         return bytes;
     }
