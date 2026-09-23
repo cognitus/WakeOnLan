@@ -2,6 +2,7 @@ package de.florianisme.wakeonlan.persistence.repository;
 
 import android.content.Context;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Transformations;
 
@@ -40,8 +41,13 @@ public class DeviceRepository {
                 input.stream().map(deviceEntityMapper::entityToModel).collect(Collectors.toList()));
     }
 
+    @Nullable
     public Device getById(int id) {
-        return deviceEntityMapper.entityToModel(deviceDao.getById(id));
+        DeviceEntity deviceEntity = deviceDao.getById(id);
+        if (deviceEntity == null) {
+            return null;
+        }
+        return deviceEntityMapper.entityToModel(deviceEntity);
     }
 
     public void insertAll(Device... devices) {

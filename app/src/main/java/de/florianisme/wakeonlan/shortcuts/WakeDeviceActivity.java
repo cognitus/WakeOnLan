@@ -36,7 +36,7 @@ public class WakeDeviceActivity extends AppCompatActivity {
 
             Device device = DeviceRepository.getInstance(this).getById(machineId);
 
-            if (!Strings.isNullOrEmpty(device.macAddress)) {
+            if (device != null && !Strings.isNullOrEmpty(device.macAddress)) {
                 WolSender.sendWolPacket(device);
                 Toast.makeText(this, getString(R.string.wol_toast_sending_packet, device.name), Toast.LENGTH_LONG).show();
             } else {
