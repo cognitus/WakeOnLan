@@ -1,5 +1,6 @@
 package de.florianisme.wakeonlan.ui.modify
 
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,25 +26,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.google.common.base.Throwables
 import de.florianisme.wakeonlan.R
-import de.florianisme.wakeonlan.persistence.models.Device
-import de.florianisme.wakeonlan.shutdown.ShutdownModel
-import de.florianisme.wakeonlan.shutdown.exception.CommandExecuteException
 import de.florianisme.wakeonlan.shutdown.hostkey.HostKeyStore
 import de.florianisme.wakeonlan.shutdown.hostkey.RejectedHostKey
-import de.florianisme.wakeonlan.shutdown.listener.ShutdownExecutorListener
-import de.florianisme.wakeonlan.shutdown.test.ShutdownCommandTester
-import net.schmizz.sshj.connection.ConnectionException
-import net.schmizz.sshj.userauth.UserAuthException
-import java.net.ConnectException
-import java.net.UnknownHostException
-import java.util.concurrent.TimeoutException
+import de.florianisme.wakeonlan.ssh.SshCommandListener
+import de.florianisme.wakeonlan.ssh.SshCommandModel
+import de.florianisme.wakeonlan.ssh.SshErrorMessages
 
 private val SuccessGreen = Color(0xFF479C44)
 
+/**
+ * Runs an SSH command and shows the progress of each step.
+ *
+ * @param runCommand starts the command, reporting to the given listener
+ */
 @Composable
-fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
+fun SshCommandTestDialog(
+    titleRes: Int,
+    executingCommandRes: Int,
+    runCommand: (Context, SshCommandListener) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
 
     var destinationReached by remember { mutableStateOf(false) }
@@ -62,7 +65,7 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
         errorMessage = null
         rejectedHostKey = null
 
-        val listener = object : ShutdownExecutorListener {
+        val listener = object : SshCommandListener {
             override fun onTargetHostReached() {
                 destinationReached = true
             }
@@ -79,32 +82,25 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
                 commandExecuted = true
             }
 
-            override fun onSudoPromptTriggered(shutdownModel: ShutdownModel) {
-                errorMessage = context.getString(
-                    R.string.test_shutdown_error_execution_sudo_prompt,
-                    shutdownModel.command
-                )
+            override fun onSudoPromptTriggered(commandModel: SshCommandModel) {
+                errorMessage = SshErrorMessages.sudoPrompt(context, commandModel)
             }
 
             override fun onHostKeyChanged(hostKey: RejectedHostKey) {
-                errorMessage = context.getString(
-                    R.string.test_shutdown_error_host_key_changed,
-                    hostKey.host,
-                    hostKey.fingerprint
-                )
+                errorMessage = SshErrorMessages.hostKeyChanged(context, hostKey)
                 rejectedHostKey = hostKey
             }
 
-            override fun onGeneralError(exception: Exception, shutdownModel: ShutdownModel?) {
-                errorMessage = textByExceptionType(context, exception, shutdownModel)
+            override fun onGeneralError(exception: Exception, commandModel: SshCommandModel?) {
+                errorMessage = SshErrorMessages.forException(context, exception, commandModel)
             }
         }
-        ShutdownCommandTester(listener).startShutdownCommandTest(context, device)
+        runCommand(context, listener)
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.remote_shutdown_send_command_dialog_title)) },
+        title = { Text(stringResource(titleRes)) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
         },
@@ -132,7 +128,7 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
                 )
                 StepRow(
                     completed = commandExecuted,
-                    textRes = if (commandExecuted) R.string.test_shutdown_successful_command_execute else R.string.test_shutdown_initial_command_execute,
+                    textRes = if (commandExecuted) R.string.test_shutdown_successful_command_execute else executingCommandRes,
                 )
                 errorMessage?.let { message ->
                     Spacer(modifier = Modifier.padding(top = 8.dp))
@@ -162,51 +158,3 @@ private fun StepRow(completed: Boolean, textRes: Int) {
         Text(stringResource(textRes))
     }
 }
-
-private fun textByExceptionType(
-    context: android.content.Context,
-    exception: Exception,
-    shutdownModel: ShutdownModel?,
-): String {
-    return when {
-        exception is ConnectException && shutdownModel != null ->
-            context.getString(
-                R.string.test_shutdown_error_connect_exception,
-                shutdownModel.sshAddress,
-                shutdownModel.sshPort
-            )
-
-        exception is UnknownHostException && shutdownModel != null ->
-            context.getString(R.string.test_shutdown_error_unknown_host, shutdownModel.sshAddress)
-
-        exception is UserAuthException && shutdownModel != null ->
-            context.getString(
-                R.string.test_shutdown_error_auth_exception,
-                shutdownModel.username,
-                shutdownModel.sshAddress
-            )
-
-        exception is ConnectionException && Throwables.getRootCause(exception) is TimeoutException && shutdownModel != null ->
-            context.getString(R.string.test_shutdown_error_execution_timeout, shutdownModel.command)
-
-        exception is CommandExecuteException && shutdownModel != null -> {
-            val exitStatus = exception.exitStatus
-            context.getString(
-                R.string.test_shutdown_error_execution_exception,
-                shutdownModel.command,
-                exitStatus,
-                exitCodeExplanation(context, exitStatus),
-            )
-        }
-
-        else -> context.getString(R.string.test_shutdown_error_unknown_exception, exception.message)
-    }
-}
-
-private fun exitCodeExplanation(context: android.content.Context, exitStatus: Int): String =
-    when (exitStatus) {
-        127 -> context.getString(R.string.execution_error_command_not_found)
-        126 -> context.getString(R.string.execution_error_command_not_executable)
-        else -> context.getString(R.string.execution_error_unknown)
-    }
-

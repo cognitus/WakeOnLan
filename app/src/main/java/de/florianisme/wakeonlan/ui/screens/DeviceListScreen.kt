@@ -71,7 +71,7 @@ import de.florianisme.wakeonlan.ui.list.status.pool.StatusTestType
 import de.florianisme.wakeonlan.ui.modify.AddDeviceActivity
 import de.florianisme.wakeonlan.ui.modify.EditDeviceActivity
 import de.florianisme.wakeonlan.ui.theme.WakeOnLanTheme
-import de.florianisme.wakeonlan.wol.WolSender
+import de.florianisme.wakeonlan.wol.WakeDispatcher
 import kotlinx.coroutines.launch
 
 private val statusTesterPool = PingStatusTesterPool.getInstance()
@@ -124,7 +124,7 @@ fun DeviceListScreen() {
                     DeviceRow(
                         device = device,
                         onWakeClicked = {
-                            WolSender.sendWolPacket(device)
+                            WakeDispatcher.wake(context, device)
                             scope.launch {
                                 snackbarHostState.showSnackbar(
                                     context.getString(

@@ -10,7 +10,7 @@ import com.google.android.gms.wearable.WearableListenerService;
 import de.florianisme.wakeonlan.models.DeviceIdCodec;
 import de.florianisme.wakeonlan.persistence.models.Device;
 import de.florianisme.wakeonlan.persistence.repository.DeviceRepository;
-import de.florianisme.wakeonlan.wol.WolSender;
+import de.florianisme.wakeonlan.wol.WakeDispatcher;
 
 public class WearDeviceClickedService extends WearableListenerService {
 
@@ -31,7 +31,7 @@ public class WearDeviceClickedService extends WearableListenerService {
             Device device = deviceRepository.getById(deviceId);
 
             if (device != null) {
-                WolSender.sendWolPacket(device);
+                WakeDispatcher.wake(this, device);
             }
         }
     }

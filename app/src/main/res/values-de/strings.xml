@@ -17,6 +17,13 @@
     <string name="add_device_shutdown_password">Passwort</string>
     <string name="add_device_shutdown_command">Kommando zum Herunterfahren</string>
     <string name="add_device_shutdown_command_helper">Kommando muss ausführbar sein, ohne die interaktive Authentifizierung zu starten (sudo Passwort Aufforderung)</string>
+    <string name="add_device_wake_ssh">Aufwecken über SSH</string>
+    <string name="add_device_wake_ssh_explanation">Meldet sich per SSH an einem anderen Gerät im Netzwerk des Ziels an, das dann das Magic Packet sendet. Nützlich, wenn das Smartphone nicht im selben Netzwerk ist.</string>
+    <string name="add_device_wake_ssh_enable">Über SSH-Relay aufwecken</string>
+    <string name="add_device_wake_ssh_ip">SSH Adresse des Relays</string>
+    <string name="add_device_wake_ssh_command">Aufweck-Kommando</string>
+    <string name="add_device_wake_ssh_command_helper">{mac}, {broadcast} und {port} werden durch die Werte dieses Geräts ersetzt. Das Kommando muss ohne sudo Passwort-Aufforderung ausführbar sein.</string>
+    <string name="modify_device_test_wake">Aufwecken testen</string>
     <string name="add_device_menu_save">Speichern</string>
     <string name="add_device_menu_delete">Löschen</string>
     <string name="add_device_error_mac_invalid">Ungültige MAC Adresse</string>
@@ -93,6 +100,11 @@
     <string name="test_shutdown_trust_new_host_key">Neuem Schlüssel vertrauen</string>
     <string name="test_shutdown_error_unknown_exception">Unbekannte Fehler: %1$s</string>
     <string name="execution_error_unknown">Unbekannter Fehler</string>
+    <string name="wake_ssh_test_dialog_title">Aufwecken über SSH</string>
+    <string name="test_wake_ssh_initial_command_execute">Führe Aufweck-Kommando aus…</string>
+    <string name="ssh_failure_notification_channel_name">SSH-Fehler</string>
+    <string name="ssh_failure_notification_title_wake">%1$s konnte nicht aufgeweckt werden</string>
+    <string name="ssh_failure_notification_title_shutdown">%1$s konnte nicht heruntergefahren werden</string>
     <string name="execution_error_command_not_found">Kommando nicht gefunden</string>
     <string name="execution_error_command_not_executable">Kommando nicht ausführbar</string>
     <string name="test_shutdown_error_execution_timeout">Ausführung des Kommandos \"%1$s\" dauerte zu lange oder sudo Passwort-Aufforderung wurde gestartet</string>

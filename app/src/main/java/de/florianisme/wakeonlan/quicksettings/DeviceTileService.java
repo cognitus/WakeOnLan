@@ -17,7 +17,7 @@ import de.florianisme.wakeonlan.ui.list.status.DeviceStatusListener;
 import de.florianisme.wakeonlan.ui.list.status.pool.PingStatusTesterPool;
 import de.florianisme.wakeonlan.ui.list.status.pool.StatusTestType;
 import de.florianisme.wakeonlan.ui.list.status.pool.StatusTesterPool;
-import de.florianisme.wakeonlan.wol.WolSender;
+import de.florianisme.wakeonlan.wol.WakeDispatcher;
 
 public abstract class DeviceTileService extends TileService implements DeviceStatusListener {
 
@@ -82,7 +82,7 @@ public abstract class DeviceTileService extends TileService implements DeviceSta
                 Toast.makeText(this, getString(R.string.remote_shutdown_send_command, device.name), Toast.LENGTH_LONG).show();
             }
         } else {
-            WolSender.sendWolPacket(device);
+            WakeDispatcher.wake(this, device);
             Toast.makeText(this, getString(R.string.wol_toast_sending_packet, device.name), Toast.LENGTH_LONG).show();
         }
     }

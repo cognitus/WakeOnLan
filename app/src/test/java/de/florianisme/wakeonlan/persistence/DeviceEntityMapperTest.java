@@ -41,11 +41,26 @@ public class DeviceEntityMapperTest {
     @Test
     public void testSshPasswordIsEncryptedInEntityAndDecryptedInModel() {
         Device device = new Device(1, "PC", "aa:bb:cc:01:02:03", "192.168.0.255", 9, null, null,
-                true, "192.168.0.10", 22, "user", "secret", "sudo poweroff");
+                true, "192.168.0.10", 22, "user", "secret", "sudo poweroff",
+                false, null, null, null, null, null);
 
         DeviceEntity entity = mapper.modelToEntity(device);
         assertEquals("enc1:terces", entity.sshPassword);
         assertEquals("secret", mapper.entityToModel(entity).sshPassword);
+    }
+
+    @Test
+    public void testRelaySshPasswordIsEncryptedInEntityAndDecryptedInModel() {
+        Device device = new Device(1, "PC", "aa:bb:cc:01:02:03", "192.168.0.255", 9, null, null,
+                false, null, null, null, null, null,
+                true, "192.168.0.2", 22, "pi", "relay", "wakeonlan {mac}");
+
+        DeviceEntity entity = mapper.modelToEntity(device);
+        assertEquals("enc1:yaler", entity.relaySshPassword);
+
+        Device mapped = mapper.entityToModel(entity);
+        assertEquals("relay", mapped.relaySshPassword);
+        assertEquals("wakeonlan {mac}", mapped.relaySshCommand);
     }
 
     @Test

@@ -30,6 +30,13 @@
     <string name="add_device_shutdown_password">密码</string>
     <string name="add_device_shutdown_command">关机命令</string>
     <string name="add_device_shutdown_command_helper">必须使用非交互式命令，且无需交互式提权（例如sudo的询问密码）。</string>
+    <string name="add_device_wake_ssh">通过 SSH 唤醒</string>
+    <string name="add_device_wake_ssh_explanation">通过 SSH 登录目标网络中的另一台设备，由其发送魔术包。适用于手机与目标不在同一网络的情况。</string>
+    <string name="add_device_wake_ssh_enable">通过 SSH 中继唤醒</string>
+    <string name="add_device_wake_ssh_ip">中继 SSH 地址</string>
+    <string name="add_device_wake_ssh_command">唤醒命令</string>
+    <string name="add_device_wake_ssh_command_helper">{mac}、{broadcast} 和 {port} 会被替换为此设备的值。命令必须能在不触发 sudo 密码提示的情况下执行。</string>
+    <string name="modify_device_test_wake">测试唤醒命令</string>
     <string name="add_device_menu_save">保存</string>
     <string name="add_device_menu_delete">删除</string>
 
@@ -126,6 +133,11 @@
     <string name="execution_error_command_not_found">命令不存在</string>
     <string name="execution_error_command_not_executable">命令无法执行</string>
     <string name="execution_error_unknown">出现未知错误</string>
+    <string name="wake_ssh_test_dialog_title">测试 SSH 唤醒</string>
+    <string name="test_wake_ssh_initial_command_execute">执行唤醒命令…</string>
+    <string name="ssh_failure_notification_channel_name">SSH 错误</string>
+    <string name="ssh_failure_notification_title_wake">无法唤醒 %1$s</string>
+    <string name="ssh_failure_notification_title_shutdown">无法关闭 %1$s</string>
 
     <string name="local_network_permission_denied_title">需要授权</string>
     <string name="local_network_permission_denied_message">网络唤醒 APP 需要访问本地网络来发送唤醒数据包，否则网络唤醒无法工作。\n\n请在应用程序信息中授予本地网络权限。</string>

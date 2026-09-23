@@ -31,6 +31,13 @@
     <string name="add_device_shutdown_password">Password</string>
     <string name="add_device_shutdown_command">Shutdown Command</string>
     <string name="add_device_shutdown_command_helper">Command must be executable without triggering Interactive authentication (sudo password-prompt)</string>
+    <string name="add_device_wake_ssh">Wake via SSH</string>
+    <string name="add_device_wake_ssh_explanation">Logs into another device in the target\'s network via SSH and has it send the magic packet. Use this when your phone is not in the same network.</string>
+    <string name="add_device_wake_ssh_enable">Wake through an SSH relay</string>
+    <string name="add_device_wake_ssh_ip">Relay SSH Address</string>
+    <string name="add_device_wake_ssh_command">Wake Command</string>
+    <string name="add_device_wake_ssh_command_helper">{mac}, {broadcast} and {port} are replaced with this device\'s values. The command must run without triggering a sudo password prompt.</string>
+    <string name="modify_device_test_wake">Test wake command</string>
     <string name="add_device_menu_save">Save</string>
     <string name="add_device_menu_delete">Delete</string>
 
@@ -130,6 +137,11 @@
     <string name="execution_error_command_not_found">Command not found</string>
     <string name="execution_error_command_not_executable">Command not executable</string>
     <string name="execution_error_unknown">Unknown</string>
+    <string name="wake_ssh_test_dialog_title">Wake via SSH Test</string>
+    <string name="test_wake_ssh_initial_command_execute">Executing wake command…</string>
+    <string name="ssh_failure_notification_channel_name">SSH errors</string>
+    <string name="ssh_failure_notification_title_wake">Could not wake %1$s</string>
+    <string name="ssh_failure_notification_title_shutdown">Could not shut down %1$s</string>
 
     <string name="local_network_permission_denied_title">Permission required</string>
     <string name="local_network_permission_denied_message">Wake on Lan needs the local network permission to send magic packets to your devices. Without it, waking devices will not work.\n\nPlease grant the local network permission in the app settings.</string>

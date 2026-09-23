@@ -1,6 +1,6 @@
-package de.florianisme.wakeonlan.shutdown;
+package de.florianisme.wakeonlan.ssh;
 
-public class ShutdownModel {
+public class SshCommandModel {
 
     private final String sshAddress;
     private final int sshPort;
@@ -8,7 +8,7 @@ public class ShutdownModel {
     private final String password;
     private final String command;
 
-    public ShutdownModel(String sshAddress, int sshPort, String username, String password, String command) {
+    public SshCommandModel(String sshAddress, int sshPort, String username, String password, String command) {
         this.sshAddress = sshAddress;
         this.sshPort = sshPort;
         this.username = username;

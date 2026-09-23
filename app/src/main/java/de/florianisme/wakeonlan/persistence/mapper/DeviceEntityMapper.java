@@ -18,7 +18,9 @@ public class DeviceEntityMapper implements EntityMapper<Device, DeviceEntity> {
             return new Device();
         }
         return new Device(entity.id, entity.name, entity.macAddress, entity.broadcastAddress, entity.port, entity.statusIp, entity.secureOnPassword,
-                entity.enableRemoteShutdown, entity.sshAddress, entity.sshPort, entity.sshUsername, secretCipher.decrypt(entity.sshPassword), entity.sshCommand);
+                entity.enableRemoteShutdown, entity.sshAddress, entity.sshPort, entity.sshUsername, secretCipher.decrypt(entity.sshPassword), entity.sshCommand,
+                entity.wakeViaSsh, entity.relaySshAddress, entity.relaySshPort, entity.relaySshUsername, secretCipher.decrypt(entity.relaySshPassword),
+                entity.relaySshCommand);
     }
 
     @Override
@@ -27,6 +29,8 @@ public class DeviceEntityMapper implements EntityMapper<Device, DeviceEntity> {
             return new DeviceEntity();
         }
         return new DeviceEntity(model.id, model.name, model.macAddress, model.broadcastAddress, model.port, model.statusIp, model.secureOnPassword,
-                model.remoteShutdownEnabled, model.sshAddress, model.sshPort, model.sshUsername, secretCipher.encrypt(model.sshPassword), model.sshCommand);
+                model.remoteShutdownEnabled, model.sshAddress, model.sshPort, model.sshUsername, secretCipher.encrypt(model.sshPassword), model.sshCommand,
+                model.wakeViaSsh, model.relaySshAddress, model.relaySshPort, model.relaySshUsername, secretCipher.encrypt(model.relaySshPassword),
+                model.relaySshCommand);
     }
 }
