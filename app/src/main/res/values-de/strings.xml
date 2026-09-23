@@ -89,6 +89,8 @@
     <string name="test_shutdown_error_execution_sudo_prompt">Kommando \"%1$s\" hat sudo Passwort-Aufforderung gestartet.\nKommando muss ohne Passwort-Aufforderung ausführbar sein!</string>
     <string name="test_shutdown_error_auth_exception">Benutzer %1$s konnte am Zielsystem %2$s nicht authentifiziert werden</string>
     <string name="test_shutdown_error_execution_exception">Kommando \"%1$s\" wurde mit Status code %2$d beendet (%3$s)</string>
+    <string name="test_shutdown_error_host_key_changed">Der SSH-Hostschlüssel von %1$s hat sich geändert. Neuer Fingerabdruck:\n%2$s\n\nWenn Sie das Zielgerät nicht neu installiert oder umkonfiguriert haben, wird die Verbindung möglicherweise abgefangen.</string>
+    <string name="test_shutdown_trust_new_host_key">Neuem Schlüssel vertrauen</string>
     <string name="test_shutdown_error_unknown_exception">Unbekannte Fehler: %1$s</string>
     <string name="execution_error_unknown">Unbekannter Fehler</string>
     <string name="execution_error_command_not_found">Kommando nicht gefunden</string>

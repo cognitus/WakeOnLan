@@ -1,6 +1,7 @@
 package de.florianisme.wakeonlan.shutdown.listener;
 
 import de.florianisme.wakeonlan.shutdown.ShutdownModel;
+import de.florianisme.wakeonlan.shutdown.hostkey.RejectedHostKey;
 
 public class IgnoringShutdownExecutorListener implements ShutdownExecutorListener {
 
@@ -26,6 +27,11 @@ public class IgnoringShutdownExecutorListener implements ShutdownExecutorListene
 
     @Override
     public void onSudoPromptTriggered(ShutdownModel shutdownModel) {
+        // Ignore
+    }
+
+    @Override
+    public void onHostKeyChanged(RejectedHostKey rejectedHostKey) {
         // Ignore
     }
 

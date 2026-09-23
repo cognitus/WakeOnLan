@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.florianisme.wakeonlan.models.DeviceDto;
+import de.florianisme.wakeonlan.models.DeviceIdCodec;
 
 public class MobileClient {
 
@@ -32,7 +33,7 @@ public class MobileClient {
     public static void sendDeviceClickedMessage(NodeClient nodeClient, MessageClient messageClient, DeviceDto device) {
         nodeClient.getConnectedNodes().addOnSuccessListener(nodes -> {
             for (Node node : nodes) {
-                messageClient.sendMessage(node.getId(), DEVICE_CLICKED_PATH, new byte[]{(byte) device.getId()});
+                messageClient.sendMessage(node.getId(), DEVICE_CLICKED_PATH, DeviceIdCodec.encode(device.getId()));
             }
         });
     }

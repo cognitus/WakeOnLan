@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,6 +30,8 @@ import de.florianisme.wakeonlan.R
 import de.florianisme.wakeonlan.persistence.models.Device
 import de.florianisme.wakeonlan.shutdown.ShutdownModel
 import de.florianisme.wakeonlan.shutdown.exception.CommandExecuteException
+import de.florianisme.wakeonlan.shutdown.hostkey.HostKeyStore
+import de.florianisme.wakeonlan.shutdown.hostkey.RejectedHostKey
 import de.florianisme.wakeonlan.shutdown.listener.ShutdownExecutorListener
 import de.florianisme.wakeonlan.shutdown.test.ShutdownCommandTester
 import net.schmizz.sshj.connection.ConnectionException
@@ -48,8 +51,17 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
     var sessionCreated by remember { mutableStateOf(false) }
     var commandExecuted by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var rejectedHostKey by remember { mutableStateOf<RejectedHostKey?>(null) }
+    var attempt by remember { mutableIntStateOf(0) }
 
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    androidx.compose.runtime.LaunchedEffect(attempt) {
+        destinationReached = false
+        authorized = false
+        sessionCreated = false
+        commandExecuted = false
+        errorMessage = null
+        rejectedHostKey = null
+
         val listener = object : ShutdownExecutorListener {
             override fun onTargetHostReached() {
                 destinationReached = true
@@ -74,11 +86,20 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
                 )
             }
 
+            override fun onHostKeyChanged(hostKey: RejectedHostKey) {
+                errorMessage = context.getString(
+                    R.string.test_shutdown_error_host_key_changed,
+                    hostKey.host,
+                    hostKey.fingerprint
+                )
+                rejectedHostKey = hostKey
+            }
+
             override fun onGeneralError(exception: Exception, shutdownModel: ShutdownModel?) {
                 errorMessage = textByExceptionType(context, exception, shutdownModel)
             }
         }
-        ShutdownCommandTester(listener).startShutdownCommandTest(device)
+        ShutdownCommandTester(listener).startShutdownCommandTest(context, device)
     }
 
     AlertDialog(
@@ -86,6 +107,14 @@ fun ShutdownTestDialog(device: Device, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.remote_shutdown_send_command_dialog_title)) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            rejectedHostKey?.let { hostKey ->
+                TextButton(onClick = {
+                    HostKeyStore(context).trust(hostKey.host, hostKey.port, hostKey.fingerprint)
+                    attempt++
+                }) { Text(stringResource(R.string.test_shutdown_trust_new_host_key)) }
+            }
         },
         text = {
             Column {

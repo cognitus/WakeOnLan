@@ -120,6 +120,8 @@
     <string name="test_shutdown_error_execution_timeout">命令 \"%1$s\" 执行超时或需要交互式操作</string>
     <string name="test_shutdown_error_execution_sudo_prompt">命令 \"%1$s\" 需要额外提权。\n不支持 sudo 交互式提权！</string>
     <string name="test_shutdown_error_unknown_host">无效的设备地址：\"%1$s\"</string>
+    <string name="test_shutdown_error_host_key_changed">%1$s 的 SSH 主机密钥已更改。新指纹：\n%2$s\n\n如果您没有重装或重新配置目标设备，连接可能已被拦截。</string>
+    <string name="test_shutdown_trust_new_host_key">信任新密钥</string>
     <string name="test_shutdown_error_unknown_exception">未知错误：%1$s</string>
     <string name="execution_error_command_not_found">命令不存在</string>
     <string name="execution_error_command_not_executable">命令无法执行</string>
